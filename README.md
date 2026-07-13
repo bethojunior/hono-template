@@ -113,5 +113,3 @@ A API sobe em `http://localhost:3000`.
 - Sempre usar `import`/`export` (nunca `require`/`module.exports` diretamente) — a transpilação é feita pelo `tsc`.
 - Nunca adicionar extensão `.js` nos imports relativos (ex.: `from '../services/user.service'`, não `.service.js`).
 - Gerenciador de pacotes: **yarn** apenas.
-
-Mais detalhes de convenções em [CLAUDE.md](./CLAUDE.md).
