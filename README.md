@@ -103,10 +103,19 @@ A API sobe em `http://localhost:3000`.
 ## Recursos incluídos
 
 - **Auth**: `POST /auth/login`, `POST /auth/refresh-token`, `POST /auth/logout` (JWT com access + refresh token)
-- **Users**: `GET /user`, `POST /user`
+  - Access token de vida curta (`JWT_EXPIRATION_TIME`, padrão `15m`) + refresh token de vida longa (`REFRESH_TOKEN_EXPIRATION_TIME`, padrão `30d`), com secrets distintos (`JWT_SECRET` / `REFRESH_TOKEN_SECRET`)
+  - Refresh token rotativo: a cada `/auth/refresh-token`, o token antigo é invalidado e um novo par é emitido; o hash do refresh token salvo no banco é comparado com `timingSafeEqual`
+  - `/auth/logout` revoga o refresh token do usuário no banco
+- **Users**: `POST /user` (cadastro, público), `GET /user` (listagem, protegido por `authMiddleware`)
 - **Blog**: CRUD completo em `/blog` (protegido por `authMiddleware`)
-- **Resource**: `POST /resource`, `GET /resource/:id`, `DELETE /resource/:id` (upload/gestão de arquivos via S3)
+- **Resource**: `POST /resource`, `GET /resource/:id`, `DELETE /resource/:id` (upload/gestão de arquivos via S3, protegido por `authMiddleware`)
 - **Event bus**: publicação/consumo de eventos (`user-created`, `blog-created`) via RabbitMQ, com registro de status em `Event` (Postgres)
+  - Status possíveis: `PENDING`, `PUBLISHED`, `PROCESSING`, `PROCESSED`, `FAILED_PUBLISH`, `FAILED_PROCESSING`, `DEAD_LETTER`
+  - **Retry automático com backoff**: job em background (intervalo via `EVENT_RETRY_INTERVAL_MS`, padrão `60000`) reprocessa eventos `FAILED_PUBLISH`/`FAILED_PROCESSING` elegíveis, com backoff exponencial (30s até um teto de 30min) e limite de 5 tentativas — após isso o evento vira `DEAD_LETTER`
+  - **Replay manual** (rotas protegidas por `authMiddleware`):
+    - `GET /events?status=<status>` — lista eventos, opcionalmente filtrando por status
+    - `POST /events/replay-failed` — dispara a varredura de retry sob demanda
+    - `POST /events/:id/replay` — reenvia um evento específico para a fila, zerando tentativas (útil para tirar um evento de `DEAD_LETTER`)
 
 ## Convenções de código
 
