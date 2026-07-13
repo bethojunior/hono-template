@@ -1,0 +1,18 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const hono_1 = require("hono");
+const tsyringe_1 = require("tsyringe");
+const blog_controller_1 = require("../app/controllers/blog.controller");
+const create_blog_dto_1 = require("../app/dto/blog/create-blog.dto");
+const update_blog_dto_1 = require("../app/dto/blog/update-blog.dto");
+const auth_middleware_1 = require("../app/middlewares/auth.middleware");
+const validate_dto_middleware_1 = require("../app/middlewares/validate-dto.middleware");
+const app = new hono_1.Hono();
+const blogController = tsyringe_1.container.resolve(blog_controller_1.BlogController);
+app.use('*', auth_middleware_1.authMiddleware);
+app.get('/', (c) => blogController.index(c));
+app.post('/', (0, validate_dto_middleware_1.validateDto)(create_blog_dto_1.CreateBlogDto), (c) => blogController.store(c));
+app.get('/:id', (c) => blogController.show(c));
+app.patch('/:id', (0, validate_dto_middleware_1.validateDto)(update_blog_dto_1.UpdateBlogDto), (c) => blogController.update(c));
+app.delete('/:id', (c) => blogController.destroy(c));
+exports.default = app;

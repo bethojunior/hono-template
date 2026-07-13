@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const hono_1 = require("hono");
+const tsyringe_1 = require("tsyringe");
+const user_controller_1 = require("../app/controllers/user.controller");
+const create_user_dto_1 = require("../app/dto/users/create-user.dto");
+const validate_dto_middleware_1 = require("../app/middlewares/validate-dto.middleware");
+const app = new hono_1.Hono();
+const usersController = tsyringe_1.container.resolve(user_controller_1.UsersController);
+app.get('/', (c) => usersController.findAll(c));
+app.post('/', (0, validate_dto_middleware_1.validateDto)(create_user_dto_1.CreateUserDto), (c) => usersController.store(c));
+exports.default = app;
