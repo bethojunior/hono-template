@@ -27,6 +27,17 @@ export class BlogCreatedConsumer implements EventConsumer<BlogCreatedPayload> {
       },
     })
 
+    if(payload.resources && payload.resources.length > 0) {
+      const blogResources = payload.resources.map(resourceId => ({
+        blogId: blog.id,
+        resourceId,
+      }))
+
+      await this.prismaProvider.blogResource.createMany({
+        data: blogResources,
+      })
+    }
+
     const cachedBlogs = await this.cacheProvider.get<BlogEntity[]>(BLOGS_CACHE_KEY)
 
     if (cachedBlogs) {

@@ -1,7 +1,7 @@
 import { inject, injectable } from 'tsyringe'
 import type { CreateBlogDto } from '../dto/blog/create-blog.dto'
 import type { UpdateBlogDto } from '../dto/blog/update-blog.dto'
-import { BLOGS_CACHE_KEY, blogCacheKey, BlogEntity } from '../entities/blog.entity'
+import { blogCacheKey, BlogEntity, BLOGS_CACHE_KEY } from '../entities/blog.entity'
 import { HttpError, NotFoundError } from '../errors/http-error'
 import { CacheProvider } from '../providers/cache/cache.provider'
 import { EventBusProvider } from '../providers/event-bus/event-bus.provider'
@@ -23,29 +23,41 @@ export class BlogService {
       await this.eventBusProvider.emit('blog.created', {
         title: data.title,
         content: data.content,
+        resources: data.resources || [],
       })
 
       return { message: 'Blog creation requested' }
     } catch (error) {
-      if (error instanceof HttpError) throw error
-      throw new Error(`Error requesting blog creation: ${error}`)
+      throw error
     }
   }
 
-  async findAll(): Promise<BlogEntity[]> {
+  async findAll(skip = 0, take = 100): Promise<BlogEntity[]> {
     try {
       const cached = await this.cacheProvider.get<BlogEntity[]>(BLOGS_CACHE_KEY)
 
       if (cached) return cached
 
-      const blogs = await this.prismaProvider.blog.findMany()
+      const blogs = await this.prismaProvider.blog.findMany({
+        include: {
+          resources: {
+            include: {
+              resource: true,
+            },
+          },
+        },
+        skip,
+        take,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      })
 
       await this.cacheProvider.set(BLOGS_CACHE_KEY, blogs)
 
       return blogs
     } catch (error) {
-      if (error instanceof HttpError) throw error
-      throw new Error(`Error fetching blogs: ${error}`)
+      throw error
     }
   }
 
@@ -55,7 +67,16 @@ export class BlogService {
 
       if (cached) return cached
 
-      const blog = await this.prismaProvider.blog.findUnique({ where: { id } })
+      const blog = await this.prismaProvider.blog.findUnique({
+        where: { id },
+        include: {
+          resources: {
+            include: {
+              resource: true,
+            },
+          },
+        },
+      })
 
       if (!blog) throw new NotFoundError('Blog not found')
 
@@ -63,36 +84,52 @@ export class BlogService {
 
       return blog
     } catch (error) {
-      if (error instanceof HttpError) throw error
-      throw new Error(`Error fetching blog: ${error}`)
+      throw error
     }
   }
 
   async update(id: string, data: UpdateBlogDto): Promise<BlogEntity> {
     try {
-      const blog = await this.prismaProvider.blog.update({ where: { id }, data })
+      const blog = await this.prismaProvider.blog.update({
+        where: { id },
+        data,
+        include: {
+          resources: {
+            include: {
+              resource: true,
+            },
+          },
+        },
+      })
 
       await this.cacheProvider.set(blogCacheKey(id), blog)
       await this.cacheProvider.del(BLOGS_CACHE_KEY)
 
       return blog
     } catch (error) {
-      if (error instanceof HttpError) throw error
-      throw new Error(`Error updating blog: ${error}`)
+      throw error
     }
   }
 
   async remove(id: string): Promise<BlogEntity> {
     try {
-      const blog = await this.prismaProvider.blog.delete({ where: { id } })
+      const blog = await this.prismaProvider.blog.delete({
+        where: { id },
+        include: {
+          resources: {
+            include: {
+              resource: true,
+            },
+          },
+        },
+      })
 
       await this.cacheProvider.del(blogCacheKey(id))
       await this.cacheProvider.del(BLOGS_CACHE_KEY)
 
       return blog
     } catch (error) {
-      if (error instanceof HttpError) throw error
-      throw new Error(`Error deleting blog: ${error}`)
+      throw error
     }
   }
 }

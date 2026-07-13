@@ -33,8 +33,8 @@ model User {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-  
-  resource  Resource? @relation(fields: [resourceId], references: [id])
+
+  resource Resource? @relation(fields: [resourceId], references: [id])
 
   @@map("users")
 }
@@ -64,9 +64,10 @@ model Resource {
   id  String  @id @default(cuid())
   url String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  users     User[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  users         User[]
+  blogResources BlogResource[]
 
   @@map("resource")
 }
@@ -76,8 +77,23 @@ model Blog {
   title   String
   content String
 
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  resources BlogResource[]
+
+  @@map("blogs")
+}
+
+model BlogResource {
+  id         String @id @default(cuid())
+  blogId     String
+  resourceId String
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("blogs")
+  blog     Blog     @relation(fields: [blogId], references: [id])
+  resource Resource @relation(fields: [resourceId], references: [id])
+
+  @@map("blog_resource")
 }

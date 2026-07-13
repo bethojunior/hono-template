@@ -15,7 +15,10 @@ export class BlogController {
 
   async index(c: Context) {
     try {
-      const blogs = await this.service.findAll()
+      const skip = parseInt(c.req.query('skip') || '0', 10)
+      const take = parseInt(c.req.query('take') || '100', 10)
+      
+      const blogs = await this.service.findAll(skip, take)
       return c.json(blogs)
     } catch (error) {
       if (error instanceof HttpError) {
@@ -42,9 +45,7 @@ export class BlogController {
     try {
       const id = c.req.param('id')
 
-      if (!id) {
-        return c.json({ error: 'Id é obrigatório' }, 400)
-      }
+      if (!id) return c.json({ error: 'Id é obrigatório' }, 400)
 
       const blog = await this.service.findOne(id)
       return c.json(blog)
@@ -60,9 +61,7 @@ export class BlogController {
     try {
       const id = c.req.param('id')
 
-      if (!id) {
-        return c.json({ error: 'Id é obrigatório' }, 400)
-      }
+      if (!id) return c.json({ error: 'Id é obrigatório' }, 400)
 
       const body = c.get('body') as UpdateBlogDto
       const blog = await this.service.update(id, body)
@@ -79,9 +78,7 @@ export class BlogController {
     try {
       const id = c.req.param('id')
 
-      if (!id) {
-        return c.json({ error: 'Id é obrigatório' }, 400)
-      }
+      if (!id) return c.json({ error: 'Id é obrigatório' }, 400)
 
       await this.service.remove(id)
       return c.body(null, 204)
