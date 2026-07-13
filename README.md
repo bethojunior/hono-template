@@ -118,7 +118,4 @@ A API sobe em `http://localhost:3000`.
     - `POST /events/:id/replay` — reenvia um evento específico para a fila, zerando tentativas (útil para tirar um evento de `DEAD_LETTER`)
 
 ## Convenções de código
-
-- Sempre usar `import`/`export` (nunca `require`/`module.exports` diretamente) — a transpilação é feita pelo `tsc`.
-- Nunca adicionar extensão `.js` nos imports relativos (ex.: `from '../services/user.service'`, não `.service.js`).
 - Gerenciador de pacotes: **yarn** apenas.
