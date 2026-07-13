@@ -8,6 +8,7 @@ import { EventBusConsumer } from './app/providers/event-bus/event-bus.consumer'
 import { EventBusProvider } from './app/providers/event-bus/event-bus.provider'
 import authRoutes from './routes/auth.routes'
 import blogRoutes from './routes/blog.routes'
+import eventsRoutes from './routes/events.routes'
 import resourceRoutes from './routes/resource.routes'
 import usersRoutes from './routes/users.routes'
 
@@ -21,6 +22,7 @@ app.route('/auth', authRoutes)
 app.route('/user', usersRoutes)
 app.route('/resource', resourceRoutes)
 app.route('/blog', blogRoutes)
+app.route('/events', eventsRoutes)
 
 async function bootstrapEventBus(): Promise<void> {
   const eventBusProvider = container.resolve(EventBusProvider)
@@ -30,6 +32,14 @@ async function bootstrapEventBus(): Promise<void> {
   eventBusConsumer.register(container.resolve(BlogCreatedConsumer))
   eventBusConsumer.register(container.resolve(UserCreatedConsumer))
   await eventBusConsumer.start()
+
+  const retryIntervalMs = Number(process.env.EVENT_RETRY_INTERVAL_MS) || 60_000
+
+  setInterval(() => {
+    eventBusProvider.retryFailedEvents().catch((error) => {
+      console.error('❌ Falha ao reprocessar eventos com erro', error)
+    })
+  }, retryIntervalMs)
 }
 
 bootstrapEventBus().catch((error) => {
