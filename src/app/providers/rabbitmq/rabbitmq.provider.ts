@@ -1,7 +1,7 @@
 import amqp, { Channel, ChannelModel } from 'amqplib'
-import { injectable } from 'tsyringe'
+import { singleton } from 'tsyringe'
 
-@injectable()
+@singleton()
 export class RabbitMqProvider {
   private connection: ChannelModel | null = null
   private channel: Channel | null = null
